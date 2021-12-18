@@ -1,19 +1,39 @@
 package com.example.db;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("ALL")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AgentsBase {
-    private List<Agent> agents = new ArrayList();
+    public final List<Agent> agents;
 
     public AgentsBase() {
+        agents = new ArrayList();
+    }
+
+    public int getSize() {
+        return agents.size();
+    }
+
+    public Agent getAgent(int index) {
+        return agents.get(index);
     }
 
     public String Search(String login, String password) {
-        for (int i = 0; i < agents.size(); i++) {
-            if ((agents.get(i)).getLogin().equals(login)) {
-                if (agents.get(i).getPassword().hashCode() == password.hashCode()) {
-                    return agents.get(i).getAgId() + "";
+        for (Agent agent : agents) {
+            if (agent.getLogin().equals(login)) {
+                if (agent.getPassword().hashCode() == password.hashCode()) {
+                    if (DB.agentsBase.isAgentValid(agent)) {
+                        return agent.getAgId()+"";
+                    } else {
+                        DBController.variant = 1;
+                        return "Registration date too old, reset password";
+                    }
                 } else {
                     return "Incorrect Password";
                 }
@@ -25,7 +45,7 @@ public class AgentsBase {
 
     public String add(Agent agent) {
         int id;
-        if(!isLoginUsed(agent.getLogin())) {
+        if (!isLoginUsed(agent.getLogin())) {
 
             do {
                 id = (int) (Math.random() * 10000);
@@ -45,6 +65,8 @@ public class AgentsBase {
         }
         return false;
     }
+
+
     public boolean isLoginUsed(String login) {
         for (Agent agent : agents) {
             if (agent.getLogin().equals(login.strip())) {
@@ -52,6 +74,10 @@ public class AgentsBase {
             }
         }
         return false;
+    }
+
+    public boolean isAgentValid(Agent agent) {
+        return Period.between(LocalDate.from(agent.getRegisterDate()), LocalDate.now()).getYears() < 1 && Period.between(LocalDate.from(agent.getRegisterDate()), LocalDate.now()).getMonths() < 1 && Period.between(LocalDate.from(agent.getRegisterDate()), LocalDate.now()).getDays() < 30;
     }
 
 }
